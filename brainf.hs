@@ -5,7 +5,7 @@ data Slider a = Slider [a] [a] deriving (Show)
 complete :: Slider a -> [a]
 complete (Slider xs ys) = reverse ys ++ xs
 
-lookF (Slider xs _) = xs
+lookF (Slider (x:xs) _) = xs
 lookB (Slider _ ys) = ys
 
 current :: Slider a -> a
@@ -19,10 +19,6 @@ initSlider x = Slider x []
 
 slideBack (Slider xs (y:ys)) = Slider (y:xs) ys
 slideBack (Slider xs ys) = error (show $ length xs)
-
---slideBack' :: Slider a -> a -> Slider a
---slideBack' (Slider xs (y:[])) d = Slider (y:xs) [d]
---slideBack' slider _ = slideBack slider
 
 slideForward :: Slider a -> Slider a
 slideForward (Slider [] ys) = Slider [] ys
@@ -121,7 +117,13 @@ execute state
 	| finished state = state
         | otherwise = next state
 
-calcJumpDist xs to = length (takeWhile (\x -> x/= to) xs)
+calcJumpDistScope (x:xs) open close scope
+	| x == close && scope == 0 = 0
+	| x == close = 1 + (calcJumpDistScope xs open close (scope - 1))
+	| x == open = 1 + (calcJumpDistScope xs open close (scope + 1))
+	| otherwise = 1 + (calcJumpDistScope xs open close scope)
+
+calcJumpDist xs open close = calcJumpDistScope xs open close 0
 
 parseInstruction :: Char -> [Char] -> [Char] -> Maybe Instruction
 parseInstruction '>' _ _ = Just forward
@@ -130,8 +132,8 @@ parseInstruction '+' _ _ = Just up
 parseInstruction '-' _ _ = Just down
 parseInstruction ',' _ _ = Just read'
 parseInstruction '.' _ _ = Just write
-parseInstruction '[' f _ = Just $ jumpf $ calcJumpDist f ']'
-parseInstruction ']' _ b = Just $ jumpb $ (calcJumpDist b '[')+1
+parseInstruction '[' f _ = Just $ jumpf $ (calcJumpDist f '[' ']')+1
+parseInstruction ']' _ b = Just $ jumpb $ (calcJumpDist b ']' '[')+1
 parseInstruction _ _ _ = Nothing
 
 condAdd :: Maybe a -> [a] -> [a]
@@ -162,11 +164,10 @@ withoutDollar = reverse.tail.reverse
 bftokens = "<>+-,.[]"
 bfonly p = filter (\x -> elem x bftokens) p
 
---main = do
---	trash <- getLine
---	inputString <- getLine
---	prog <- getContents
---	putStrLn $ brainf (withoutDollar inputString) (bfonly prog)
---	return ()
-
+main = do
+	trash <- getLine
+	inputString <- getLine
+	prog <- getContents
+	putStrLn $ brainf (withoutDollar inputString) (bfonly prog)
+	return ()
 
