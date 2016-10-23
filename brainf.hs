@@ -118,7 +118,7 @@ execute state
         | otherwise = next state
 
 calcJumpDistScope (x:xs) open close scope
-	| x == close && scope == 0 = 0
+	| x == close && scope == 0 = 1
 	| x == close = 1 + (calcJumpDistScope xs open close (scope - 1))
 	| x == open = 1 + (calcJumpDistScope xs open close (scope + 1))
 	| otherwise = 1 + (calcJumpDistScope xs open close scope)
@@ -132,8 +132,8 @@ parseInstruction '+' _ _ = Just up
 parseInstruction '-' _ _ = Just down
 parseInstruction ',' _ _ = Just read'
 parseInstruction '.' _ _ = Just write
-parseInstruction '[' f _ = Just $ jumpf $ (calcJumpDist f '[' ']')+1
-parseInstruction ']' _ b = Just $ jumpb $ (calcJumpDist b ']' '[')+1
+parseInstruction '[' f _ = Just $ jumpf $ calcJumpDist f '[' ']'
+parseInstruction ']' _ b = Just $ jumpb $ (calcJumpDist b ']' '[') + 1
 parseInstruction _ _ _ = Nothing
 
 condAdd :: Maybe a -> [a] -> [a]
