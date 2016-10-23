@@ -79,11 +79,13 @@ back state = state { memory = slideBack (memory state) }
 up state = state { memory = transformValue inc (memory state) }
 down state = state { memory = transformValue dec (memory state) }
 
+addOutput state i = state { output = output state ++ [i] }
+
 jumpf n state
 	| currentMem state == 0 = again n moveInstruction state
 	| otherwise = state
 jumpb n state
-	| currentMem state /= 0 = again n moveInstruction' state
+	| currentMem state /= 0 = again (n+1) moveInstruction' state
 	| otherwise = state
 -- 
 
@@ -118,7 +120,7 @@ execute state
         | otherwise = next state
 
 calcJumpDistScope (x:xs) open close scope
-	| x == close && scope == 0 = 1
+	| x == close && scope == 0 = 0
 	| x == close = 1 + (calcJumpDistScope xs open close (scope - 1))
 	| x == open = 1 + (calcJumpDistScope xs open close (scope + 1))
 	| otherwise = 1 + (calcJumpDistScope xs open close scope)
